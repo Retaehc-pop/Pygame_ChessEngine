@@ -66,30 +66,31 @@ STALEMATE = 0
 DEPTH = 3
 
 
-def findBestMove(game_state, valid_moves, return_queue):
+def find_best_move(game_state, valid_moves, return_queue):
     global next_move
     next_move = None
     random.shuffle(valid_moves)
-    findMoveNegaMaxAlphaBeta(game_state, valid_moves, DEPTH, -CHECKMATE, CHECKMATE,
-                             1 if game_state.white_to_move else -1)
+    find_move_neg_max_ab(game_state, valid_moves, DEPTH, -CHECKMATE, CHECKMATE,
+                             1 if game_state.whitemove else -1)
     return_queue.put(next_move)
 
 
-def findMoveNegaMaxAlphaBeta(game_state, valid_moves, depth, alpha, beta, turn_multiplier):
+def find_move_neg_max_ab(game_state, valid_moves, depth, alpha, beta, turn_multiplier):
     global next_move
     if depth == 0:
-        return turn_multiplier * scoreBoard(game_state)
+        return turn_multiplier * score_board(game_state)
     # move ordering - implement later //TODO
     max_score = -CHECKMATE
     for move in valid_moves:
-        game_state.makeMove(move)
-        next_moves = game_state.getValidMoves()
-        score = -findMoveNegaMaxAlphaBeta(game_state, next_moves, depth - 1, -beta, -alpha, -turn_multiplier)
+        game_state.make_move(move)
+        next_moves = game_state.get_valid_move()
+        score = -find_move_neg_max_ab(game_state, next_moves,
+                                          depth - 1, -beta, -alpha, -turn_multiplier)
         if score > max_score:
             max_score = score
             if depth == DEPTH:
                 next_move = move
-        game_state.undoMove()
+        game_state.undo_move()
         if max_score > alpha:
             alpha = max_score
         if alpha >= beta:
@@ -97,12 +98,12 @@ def findMoveNegaMaxAlphaBeta(game_state, valid_moves, depth, alpha, beta, turn_m
     return max_score
 
 
-def scoreBoard(game_state):
+def score_board(game_state):
     """
     Score the board. A positive score is good for white, a negative score is good for black.
     """
     if game_state.checkmate:
-        if game_state.white_to_move:
+        if game_state.whitemove:
             return -CHECKMATE  # black wins
         else:
             return CHECKMATE  # white wins
@@ -124,7 +125,7 @@ def scoreBoard(game_state):
     return score
 
 
-def findRandomMove(valid_moves):
+def find_random_move(valid_moves):
     """
     Picks and returns a random valid move.
     """

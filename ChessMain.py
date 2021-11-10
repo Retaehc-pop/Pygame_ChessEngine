@@ -17,7 +17,7 @@ MAX_FPS = 15
 IMAGES = {}
 
 
-def loadImages():
+def load_Image():
     """
     Initialize a global directory of images.
     This will be called exactly once in the main.
@@ -37,10 +37,10 @@ def main():
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
     game_state = ChessEngine.GameState()
-    valid_moves = game_state.getValidMoves()
+    valid_moves = game_state.get_valid_move()
     move_made = False  # flag variable for when a move is made
     animate = False  # flag variable for when we should animate a move
-    loadImages()  # do this only once before while loop
+    load_Image()  # do this only once before while loop
     running = True
     square_selected = ()  # no square is selected initially, this will keep track of the last click of the user (tuple(row,col))
     player_clicks = []  # this will keep track of player clicks (two tuples)
@@ -53,7 +53,7 @@ def main():
     player_two = False  # if a hyman is playing white, then this will be True, else False
 
     while running:
-        human_turn = (game_state.white_to_move and player_one) or (not game_state.white_to_move and player_two)
+        human_turn = (game_state.whitemove and player_one) or (not game_state.whitemove and player_two)
         for e in p.event.get():
             if e.type == p.QUIT:
                 p.quit()
@@ -74,7 +74,7 @@ def main():
                         move = ChessEngine.Move(player_clicks[0], player_clicks[1], game_state.board)
                         for i in range(len(valid_moves)):
                             if move == valid_moves[i]:
-                                game_state.makeMove(valid_moves[i])
+                                game_state.make_move(valid_moves[i])
                                 move_made = True
                                 animate = True
                                 square_selected = ()  # reset user clicks
@@ -85,7 +85,7 @@ def main():
             # key handler
             elif e.type == p.KEYDOWN:
                 if e.key == p.K_z:  # undo when 'z' is pressed
-                    game_state.undoMove()
+                    game_state.undo_move()
                     move_made = True
                     animate = False
                     game_over = False
@@ -95,7 +95,7 @@ def main():
                     move_undone = True
                 if e.key == p.K_r:  # reset the game when 'r' is pressed
                     game_state = ChessEngine.GameState()
-                    valid_moves = game_state.getValidMoves()
+                    valid_moves = game_state.get_valid_move()
                     square_selected = ()
                     player_clicks = []
                     move_made = False
@@ -111,14 +111,14 @@ def main():
             if not ai_thinking:
                 ai_thinking = True
                 return_queue = Queue()  # used to pass data between threads
-                move_finder_process = Process(target=ChessAI.findBestMove, args=(game_state, valid_moves, return_queue))
+                move_finder_process = Process(target=ChessAI.find_best_move, args=(game_state, valid_moves, return_queue))
                 move_finder_process.start()
 
             if not move_finder_process.is_alive():
                 ai_move = return_queue.get()
                 if ai_move is None:
-                    ai_move = ChessAI.findRandomMove(valid_moves)
-                game_state.makeMove(ai_move)
+                    ai_move = ChessAI.find_random_move(valid_moves)
+                game_state.make_move(ai_move)
                 move_made = True
                 animate = True
                 ai_thinking = False
@@ -126,19 +126,19 @@ def main():
         if move_made:
             if animate:
                 animateMove(game_state.move_log[-1], screen, game_state.board, clock)
-            valid_moves = game_state.getValidMoves()
+            valid_moves = game_state.get_valid_move()
             move_made = False
             animate = False
             move_undone = False
 
-        drawGameState(screen, game_state, valid_moves, square_selected)
+        draw_game_state(screen, game_state, valid_moves, square_selected)
 
         if not game_over:
             drawMoveLog(screen, game_state, move_log_font)
 
         if game_state.checkmate:
             game_over = True
-            if game_state.white_to_move:
+            if game_state.whitemove:
                 drawEndGameText(screen, "Black wins by checkmate")
             else:
                 drawEndGameText(screen, "White wins by checkmate")
@@ -151,7 +151,7 @@ def main():
         p.display.flip()
 
 
-def drawGameState(screen, game_state, valid_moves, square_selected):
+def draw_game_state(screen, game_state, valid_moves, square_selected):
     """
     Responsible for all the graphics within current game state.
     """
@@ -186,7 +186,7 @@ def highlightSquares(screen, game_state, valid_moves, square_selected):
     if square_selected != ():
         row, col = square_selected
         if game_state.board[row][col][0] == (
-                'w' if game_state.white_to_move else 'b'):  # square_selected is a piece that can be moved
+                'w' if game_state.whitemove else 'b'):  # square_selected is a piece that can be moved
             # highlight selected square
             s = p.Surface((SQUARE_SIZE, SQUARE_SIZE))
             s.set_alpha(100)  # transparency value 0 -> transparent, 255 -> opaque
